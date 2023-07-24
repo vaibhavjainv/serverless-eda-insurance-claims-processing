@@ -4,6 +4,7 @@ import { Construct } from "constructs";
 import { NodejsFunction } from "aws-cdk-lib/aws-lambda-nodejs";
 import { Runtime } from "aws-cdk-lib/aws-lambda";
 import { LogGroup, RetentionDays } from "aws-cdk-lib/aws-logs";
+import { Effect, PolicyStatement } from "aws-cdk-lib/aws-iam";
 
 export class TestingService extends Construct {
   constructor(scope: Construct, id: string) {
@@ -17,5 +18,13 @@ export class TestingService extends Construct {
       handler: "handler",
       entry: `${__dirname}/../app/handlers/login.js`,
     });
+
+    const loginLambdaPolicy = new PolicyStatement({
+      actions: ["cognito-idp:AdminInitiateAuth"],
+      resources: ["*"],
+      effect: Effect.ALLOW,
+    });
+
+    testLoginLambdaFunction.addToRolePolicy(loginLambdaPolicy);
   }
 }
