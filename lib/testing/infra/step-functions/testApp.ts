@@ -35,11 +35,7 @@ export class TestApplicationSF extends StateMachine {
 }
 
 function createSignUpLambdaStep(scope: Construct, props: TestApplicationSFProps): LambdaInvoke {
-  return new LambdaInvoke(scope, "Generate PreSigned URLs", {
+  return new LambdaInvoke(scope, "Customer Sign Up", {
     lambdaFunction: props.testLoginLambdaFunction,
-    payload: {
-      type: InputType.OBJECT,
-      value: "$.lambdaInput",
-    },
   });
 }
