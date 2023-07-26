@@ -1,7 +1,7 @@
 // Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: MIT-0
 
-import { InputType, LogLevel, StateMachine, StateMachineType } from "aws-cdk-lib/aws-stepfunctions";
+import { InputType, IntegrationPattern, LogLevel, StateMachine, StateMachineType } from "aws-cdk-lib/aws-stepfunctions";
 import { Construct } from "constructs";
 import { LambdaInvocationType, LambdaInvoke } from "aws-cdk-lib/aws-stepfunctions-tasks";
 import * as logs from "aws-cdk-lib/aws-logs";
@@ -49,6 +49,6 @@ function createSignUpLambdaStep(scope: Construct, props: TestApplicationSFProps)
         "MyTaskToken.$": "$$.Task.Token"
       }
     },
-    invocationType: LambdaInvocationType.EVENT
+    integrationPattern: IntegrationPattern.WAIT_FOR_TASK_TOKEN
   });
 }
