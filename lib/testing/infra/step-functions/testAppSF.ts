@@ -46,7 +46,7 @@ function createSignUpLambdaStep(scope: Construct, props: TestApplicationSFProps)
         "userName.$": "$.userName",
         "password.$": "$.password",
         "postData.$": "$.postData",
-        "MyTaskToken": JsonPath.taskToken
+        "TaskToken": JsonPath.taskToken
       }
     },
     integrationPattern: IntegrationPattern.WAIT_FOR_TASK_TOKEN
