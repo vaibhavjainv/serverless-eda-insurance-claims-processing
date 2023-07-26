@@ -5,6 +5,7 @@ import { NodejsFunction } from "aws-cdk-lib/aws-lambda-nodejs";
 import { Runtime } from "aws-cdk-lib/aws-lambda";
 import { LogGroup, RetentionDays } from "aws-cdk-lib/aws-logs";
 import { Effect, PolicyStatement } from "aws-cdk-lib/aws-iam";
+import { TestApplicationSF } from "./step-functions/testApp";
 
 export class TestingService extends Construct {
   constructor(scope: Construct, id: string) {
@@ -26,5 +27,9 @@ export class TestingService extends Construct {
     });
 
     testLoginLambdaFunction.addToRolePolicy(loginLambdaPolicy);
+
+    new TestApplicationSF(this, "TestApplicationSF", {
+      testLoginLambdaFunction,
+    });
   }
 }
