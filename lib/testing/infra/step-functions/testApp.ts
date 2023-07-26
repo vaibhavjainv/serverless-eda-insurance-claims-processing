@@ -3,7 +3,7 @@
 
 import { InputType, LogLevel, StateMachine, StateMachineType } from "aws-cdk-lib/aws-stepfunctions";
 import { Construct } from "constructs";
-import { LambdaInvoke } from "aws-cdk-lib/aws-stepfunctions-tasks";
+import { LambdaInvocationType, LambdaInvoke } from "aws-cdk-lib/aws-stepfunctions-tasks";
 import * as logs from "aws-cdk-lib/aws-logs";
 import { RetentionDays } from "aws-cdk-lib/aws-logs";
 import { RemovalPolicy } from "aws-cdk-lib";
@@ -23,7 +23,7 @@ export class TestApplicationSF extends StateMachine {
 
     super(scope, id, {
       definition: createSignUpLambdaStep(scope, props),
-      stateMachineType: StateMachineType.EXPRESS,
+      stateMachineType: StateMachineType.STANDARD,
       logs: {
         destination: logGroup,
         level: LogLevel.ALL,
@@ -37,5 +37,18 @@ export class TestApplicationSF extends StateMachine {
 function createSignUpLambdaStep(scope: Construct, props: TestApplicationSFProps): LambdaInvoke {
   return new LambdaInvoke(scope, "Customer Sign Up", {
     lambdaFunction: props.testLoginLambdaFunction,
+    payload:{
+      type: InputType.OBJECT,
+      value:{
+        "userPoolId.$": "$.userPoolId",
+        "identityPoolId.$": "$.identityPoolId",
+        "clientId.$": "$.clientId",
+        "userName.$": "$.userName",
+        "password.$": "$.password",
+        "postData": "$.postData",
+        "MyTaskToken.$": "$$.Task.Token"
+      }
+    },
+    invocationType: LambdaInvocationType.EVENT
   });
 }
