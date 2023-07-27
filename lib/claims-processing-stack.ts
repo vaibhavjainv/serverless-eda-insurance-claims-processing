@@ -140,6 +140,6 @@ export class ClaimsProcessingStack extends Stack {
       ],
     });
 
-    new TestingService(this, "TestingService");
+    new TestingService(this, "TestingService", {eBus: bus});
   }
 }
