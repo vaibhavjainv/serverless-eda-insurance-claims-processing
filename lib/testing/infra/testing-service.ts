@@ -64,7 +64,7 @@ export class TestingService extends Construct {
         TEST_DATA_TABLE_NAME: testDataTable.tableName,
       },
     });
-    testDataTable.grantReadWriteData(testLoginLambdaFunction);
+    testDataTable.grantReadWriteData(saveEventsLambdaFunction);
 
     new Rule(this, "TestingEventBusRule", {
       eventBus: props.eBus,
