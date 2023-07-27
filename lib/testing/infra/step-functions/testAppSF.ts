@@ -31,7 +31,7 @@ export class TestApplicationSF extends StateMachine {
 
     super(scope, id, {
       definition: createSignUpLambdaStep(scope, props),
-      stateMachineType: StateMachineType.STANDARD,
+      stateMachineType: StateMachineType.EXPRESS,
       logs: {
         destination: logGroup,
         level: LogLevel.ALL,
@@ -54,10 +54,10 @@ function createSignUpLambdaStep(scope: Construct, props: TestApplicationSFProps)
         "userName.$": "$.userName",
         "password.$": "$.password",
         "postData.$": "$.postData",
-        TaskToken: JsonPath.taskToken,
+        // TaskToken: JsonPath.taskToken,
       },
     },
-    integrationPattern: IntegrationPattern.WAIT_FOR_TASK_TOKEN,
-    taskTimeout: Timeout.duration(Duration.seconds(60)),
+    // integrationPattern: IntegrationPattern.WAIT_FOR_TASK_TOKEN,
+    // taskTimeout: Timeout.duration(Duration.seconds(60)),
   });
 }
