@@ -9,6 +9,8 @@ import {
   StateMachine,
   StateMachineType,
   Timeout,
+  Wait,
+  WaitTime,
 } from "aws-cdk-lib/aws-stepfunctions";
 import { Construct } from "constructs";
 import { LambdaInvocationType, LambdaInvoke } from "aws-cdk-lib/aws-stepfunctions-tasks";
@@ -29,8 +31,12 @@ export class TestApplicationSF extends StateMachine {
       retention: RetentionDays.FIVE_DAYS,
     });
 
+    const signUpLambdaStep = createSignUpLambdaStep(scope, props);
+
+    signUpLambdaStep.next(new Wait(scope,"WaitForSignUp", {time: WaitTime.duration(Duration.seconds(10))}))
+
     super(scope, id, {
-      definition: createSignUpLambdaStep(scope, props),
+      definition: signUpLambdaStep,
       stateMachineType: StateMachineType.EXPRESS,
       logs: {
         destination: logGroup,
