@@ -34,7 +34,7 @@ export class ClaimsProcessingStack extends Stack {
     });
 
     new CfnDiscoverer(this, "SchemaDiscoverer", {
-      sourceArn: bus.eventBusArn
+      sourceArn: bus.eventBusArn,
     });
 
     const documentService = new DocumentService(this, "DocumentService", {
@@ -84,7 +84,7 @@ export class ClaimsProcessingStack extends Stack {
           DocumentsEvents.DOCUMENT_PROCESSED,
           FraudEvents.FRAUD_DETECTED,
           FraudEvents.FRAUD_NOT_DETECTED,
-          SettlementEvents.SETTLEMENT_FINALIZED
+          SettlementEvents.SETTLEMENT_FINALIZED,
         ],
       },
     });
@@ -100,13 +100,10 @@ export class ClaimsProcessingStack extends Stack {
     customerTable.grantReadWriteData(cleanupService.cleanupLambdaFunction);
     policyTable.grantReadWriteData(cleanupService.cleanupLambdaFunction);
     claimsTable.grantReadWriteData(cleanupService.cleanupLambdaFunction);
-    documentService.documentsBucket.grantReadWrite(
-      cleanupService.cleanupLambdaFunction
-    );
+    documentService.documentsBucket.grantReadWrite(cleanupService.cleanupLambdaFunction);
     settlementService.table.grantReadWriteData(cleanupService.cleanupLambdaFunction);
 
-    const metricsQueueWithLambdaSubscription =
-      createMetricsQueueWithLambdaSubscription(this);
+    const metricsQueueWithLambdaSubscription = createMetricsQueueWithLambdaSubscription(this);
 
     new Rule(this, "WildcardCaptureAllEventsRule", {
       eventBus: bus,
@@ -123,10 +120,7 @@ export class ClaimsProcessingStack extends Stack {
           "aws.s3",
         ],
       },
-      targets: [
-        new CloudWatchLogGroup(allEventsLogGroup),
-        new SqsQueue(metricsQueueWithLambdaSubscription),
-      ],
+      targets: [new CloudWatchLogGroup(allEventsLogGroup), new SqsQueue(metricsQueueWithLambdaSubscription)],
     });
 
     new ClaimsProcessingCWDashboard(this, "ClaimsProcessingCWDashboard", {
@@ -136,10 +130,10 @@ export class ClaimsProcessingStack extends Stack {
         claimsService.claimsMetricsWidget,
         fraudService.fraudMetricsWidget,
         documentService.documentsMetricsWidget,
-        settlementService.settlementMetricsWidget
+        settlementService.settlementMetricsWidget,
       ],
     });
 
-    new TestingService(this, "TestingService", {eBus: bus});
+    new TestingService(this, "TestingService", { eBus: bus, customerTable: customerTable });
   }
 }

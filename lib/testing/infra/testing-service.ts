@@ -14,6 +14,7 @@ import { LambdaFunction } from "aws-cdk-lib/aws-events-targets";
 
 export interface TestApplicationSFProps {
   eBus: EventBus;
+  customerTable: Table;
 }
 export class TestingService extends Construct {
   constructor(scope: Construct, id: string, props: TestApplicationSFProps) {
@@ -65,6 +66,7 @@ export class TestingService extends Construct {
       },
     });
     testDataTable.grantReadWriteData(saveEventsLambdaFunction);
+    props.customerTable.grantReadWriteData(saveEventsLambdaFunction);
 
     new Rule(this, "TestingEventBusRule", {
       eventBus: props.eBus,
