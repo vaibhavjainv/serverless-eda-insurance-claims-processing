@@ -8,9 +8,15 @@ import { Effect, PolicyStatement } from "aws-cdk-lib/aws-iam";
 import { TestApplicationSF } from "./step-functions/testAppSF";
 import { AttributeType, BillingMode, Table } from "aws-cdk-lib/aws-dynamodb";
 import { RemovalPolicy } from "aws-cdk-lib";
+import { EventBus, Rule } from "aws-cdk-lib/aws-events";
+import { CustomerEvents } from "../../services/customer/infra/customer-events";
+import { LambdaFunction } from "aws-cdk-lib/aws-events-targets";
 
+export interface TestApplicationSFProps {
+  eBus: EventBus;
+}
 export class TestingService extends Construct {
-  constructor(scope: Construct, id: string) {
+  constructor(scope: Construct, id: string, props: TestApplicationSFProps) {
     super(scope, id);
 
     // Create TestData Table
@@ -45,6 +51,28 @@ export class TestingService extends Construct {
 
     new TestApplicationSF(this, "TestApplicationSF", {
       testLoginLambdaFunction,
+    });
+
+    //Create Save Events Lambda Function
+    const saveEventsLambdaFunction = new NodejsFunction(this, "SaveEvents", {
+      runtime: Runtime.NODEJS_18_X,
+      memorySize: 512,
+      logRetention: RetentionDays.ONE_WEEK,
+      handler: "handler",
+      entry: `${__dirname}/../app/handlers/saveEvents.js`,
+      environment: {
+        TEST_DATA_TABLE_NAME: testDataTable.tableName,
+      },
+    });
+    testDataTable.grantReadWriteData(testLoginLambdaFunction);
+
+    new Rule(this, "TestingEventBusRule", {
+      eventBus: props.eBus,
+      ruleName: "TestingEventBusRule",
+      eventPattern: {
+        source: [CustomerEvents.CUSTOMER_SOURCE, CustomerEvents.SIGNUP_SOURCE],
+      },
+      targets: [new LambdaFunction(saveEventsLambdaFunction)],
     });
   }
 }
