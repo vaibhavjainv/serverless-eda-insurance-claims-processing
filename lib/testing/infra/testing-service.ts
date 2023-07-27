@@ -63,6 +63,7 @@ export class TestingService extends Construct {
       entry: `${__dirname}/../app/handlers/saveEvents.js`,
       environment: {
         TEST_DATA_TABLE_NAME: testDataTable.tableName,
+        CUSTOMER_TABLE_NAME: props.customerTable.tableName,
       },
     });
     testDataTable.grantReadWriteData(saveEventsLambdaFunction);
