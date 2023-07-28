@@ -50,8 +50,24 @@ export class TestingService extends Construct {
     testLoginLambdaFunction.addToRolePolicy(loginLambdaPolicy);
     testDataTable.grantReadWriteData(testLoginLambdaFunction);
 
+    // Verification Lambda Functions
+    const verifyLambdaFunction = new NodejsFunction(this, "VerifyEvents", {
+      runtime: Runtime.NODEJS_18_X,
+      memorySize: 512,
+      logRetention: RetentionDays.ONE_WEEK,
+      handler: "handler",
+      entry: `${__dirname}/../app/handlers/verify.js`,
+      environment: {
+        TEST_DATA_TABLE_NAME: testDataTable.tableName,
+      },
+    });
+
+    testDataTable.grantReadWriteData(verifyLambdaFunction);
+  
+
     new TestApplicationSF(this, "TestApplicationSF", {
       testLoginLambdaFunction,
+      verifyLambdaFunction
     });
 
     //Create Save Events Lambda Function

@@ -6,6 +6,7 @@ import {
   IntegrationPattern,
   JsonPath,
   LogLevel,
+  Parallel,
   StateMachine,
   StateMachineType,
   Timeout,
@@ -21,6 +22,7 @@ import { NodejsFunction } from "aws-cdk-lib/aws-lambda-nodejs";
 
 export interface TestApplicationSFProps {
   testLoginLambdaFunction: NodejsFunction;
+  verifyLambdaFunction: NodejsFunction
 }
 
 export class TestApplicationSF extends StateMachine {
@@ -34,6 +36,8 @@ export class TestApplicationSF extends StateMachine {
     const signUpLambdaStep = createSignUpLambdaStep(scope, props);
 
     signUpLambdaStep.next(new Wait(scope,"WaitForSignUp", {time: WaitTime.duration(Duration.seconds(10))}))
+
+    addSignUpValidationStep(scope, signUpLambdaStep, props);
 
     super(scope, id, {
       definition: signUpLambdaStep,
@@ -67,3 +71,15 @@ function createSignUpLambdaStep(scope: Construct, props: TestApplicationSFProps)
     // taskTimeout: Timeout.duration(Duration.seconds(60)),
   });
 }
+function addSignUpValidationStep(scope: Construct, signUpLambdaStep: LambdaInvoke, props: TestApplicationSFProps) {
+  const parallelState = new Parallel(scope, "SignUpValidation", {})
+  parallelState.branch(new LambdaInvoke(scope, "Verify Customer Submitted", {
+    lambdaFunction: props.verifyLambdaFunction
+  }))
+  parallelState.branch(new LambdaInvoke(scope, "Verify Customer Accepted", {
+    lambdaFunction: props.verifyLambdaFunction
+  }))
+
+  signUpLambdaStep.next(parallelState);
+}
+
