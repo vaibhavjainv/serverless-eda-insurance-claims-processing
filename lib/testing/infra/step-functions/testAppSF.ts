@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: MIT-0
 
 import {
+  IChainable,
   InputType,
   IntegrationPattern,
   JsonPath,
@@ -35,9 +36,9 @@ export class TestApplicationSF extends StateMachine {
 
     const signUpLambdaStep = createSignUpLambdaStep(scope, props);
 
-    signUpLambdaStep.next(new Wait(scope,"WaitForSignUp", {time: WaitTime.duration(Duration.seconds(10))}))
+    const waitStep = addWaitStep(signUpLambdaStep, scope);
 
-    addSignUpValidationStep(scope, signUpLambdaStep, props);
+    addSignUpValidationStep(scope, waitStep, props);
 
     super(scope, id, {
       definition: signUpLambdaStep,
@@ -50,6 +51,12 @@ export class TestApplicationSF extends StateMachine {
       tracingEnabled: true,
     });
   }
+}
+
+function addWaitStep(signUpLambdaStep: LambdaInvoke, scope: Construct) {
+  const waitStep = new Wait(scope, "WaitForSignUp", { time: WaitTime.duration(Duration.seconds(10)) });
+  signUpLambdaStep.next(waitStep);
+  return waitStep
 }
 
 function createSignUpLambdaStep(scope: Construct, props: TestApplicationSFProps): LambdaInvoke {
@@ -71,7 +78,7 @@ function createSignUpLambdaStep(scope: Construct, props: TestApplicationSFProps)
     // taskTimeout: Timeout.duration(Duration.seconds(60)),
   });
 }
-function addSignUpValidationStep(scope: Construct, signUpLambdaStep: LambdaInvoke, props: TestApplicationSFProps) {
+function addSignUpValidationStep(scope: Construct, waitStep: Wait, props: TestApplicationSFProps) {
   const parallelState = new Parallel(scope, "SignUpValidation", {})
   parallelState.branch(new LambdaInvoke(scope, "Verify Customer Submitted", {
     lambdaFunction: props.verifyLambdaFunction
@@ -80,6 +87,6 @@ function addSignUpValidationStep(scope: Construct, signUpLambdaStep: LambdaInvok
     lambdaFunction: props.verifyLambdaFunction
   }))
 
-  signUpLambdaStep.next(parallelState);
+  waitStep.next(parallelState);
 }
 
