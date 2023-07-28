@@ -23,7 +23,7 @@ import { NodejsFunction } from "aws-cdk-lib/aws-lambda-nodejs";
 
 export interface TestApplicationSFProps {
   testLoginLambdaFunction: NodejsFunction;
-  verifyLambdaFunction: NodejsFunction
+  verifyLambdaFunction: NodejsFunction;
 }
 
 export class TestApplicationSF extends StateMachine {
@@ -56,7 +56,7 @@ export class TestApplicationSF extends StateMachine {
 function addWaitStep(signUpLambdaStep: LambdaInvoke, scope: Construct) {
   const waitStep = new Wait(scope, "WaitForSignUp", { time: WaitTime.duration(Duration.seconds(10)) });
   signUpLambdaStep.next(waitStep);
-  return waitStep
+  return waitStep;
 }
 
 function createSignUpLambdaStep(scope: Construct, props: TestApplicationSFProps): LambdaInvoke {
@@ -74,19 +74,37 @@ function createSignUpLambdaStep(scope: Construct, props: TestApplicationSFProps)
         // TaskToken: JsonPath.taskToken,
       },
     },
+    resultSelector: {
+      "cognitoIdentityId.$": "$.Payload.cognitoIdentityId",
+    },
     // integrationPattern: IntegrationPattern.WAIT_FOR_TASK_TOKEN,
     // taskTimeout: Timeout.duration(Duration.seconds(60)),
   });
 }
 function addSignUpValidationStep(scope: Construct, waitStep: Wait, props: TestApplicationSFProps) {
-  const parallelState = new Parallel(scope, "SignUpValidation", {})
-  parallelState.branch(new LambdaInvoke(scope, "Verify Customer Submitted", {
-    lambdaFunction: props.verifyLambdaFunction
-  }))
-  parallelState.branch(new LambdaInvoke(scope, "Verify Customer Accepted", {
-    lambdaFunction: props.verifyLambdaFunction
-  }))
+  const parallelState = new Parallel(scope, "SignUpValidation", {});
+  parallelState.branch(
+    new LambdaInvoke(scope, "Verify Customer Submitted", {
+      lambdaFunction: props.verifyLambdaFunction,
+      payload: {
+        type: InputType.OBJECT,
+        value: {  
+          "cognitoIdentityId.$": "$.cognitoIdentityId",
+          "eventName": "Customer.Accepted"
+        }}
+    })
+  );
+  parallelState.branch(
+    new LambdaInvoke(scope, "Verify Customer Accepted", {
+      lambdaFunction: props.verifyLambdaFunction,
+      payload: {
+        type: InputType.OBJECT,
+        value: {  
+          "cognitoIdentityId.$": "$.cognitoIdentityId",
+          "eventName": "Customer.Submitted"
+        }}
+    })
+  );
 
   waitStep.next(parallelState);
 }
-
