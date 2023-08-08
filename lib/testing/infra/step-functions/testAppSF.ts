@@ -15,16 +15,21 @@ import {
   WaitTime,
 } from "aws-cdk-lib/aws-stepfunctions";
 import { Construct } from "constructs";
-import { LambdaInvocationType, LambdaInvoke } from "aws-cdk-lib/aws-stepfunctions-tasks";
+import { LambdaInvocationType, LambdaInvoke, DynamoGetItem, DynamoAttributeValue } from "aws-cdk-lib/aws-stepfunctions-tasks";
 import * as logs from "aws-cdk-lib/aws-logs";
 import { RetentionDays } from "aws-cdk-lib/aws-logs";
 import { Duration, RemovalPolicy } from "aws-cdk-lib";
 import { NodejsFunction } from "aws-cdk-lib/aws-lambda-nodejs";
+import { Table } from "aws-cdk-lib/aws-dynamodb";
 
 export interface TestApplicationSFProps {
   testLoginLambdaFunction: NodejsFunction;
   verifyLambdaFunction: NodejsFunction;
+  testDataTable: Table;
+
 }
+
+let gProps :TestApplicationSFProps;
 
 export class TestApplicationSF extends StateMachine {
   constructor(scope: Construct, id: string, props: TestApplicationSFProps) {
@@ -34,6 +39,8 @@ export class TestApplicationSF extends StateMachine {
       retention: RetentionDays.FIVE_DAYS,
     });
 
+    gProps = props
+        
     const signUpLambdaStep = createSignUpLambdaStep(scope, props);
 
     const waitStep = addWaitStep(signUpLambdaStep, scope);
@@ -84,27 +91,38 @@ function createSignUpLambdaStep(scope: Construct, props: TestApplicationSFProps)
 function addSignUpValidationStep(scope: Construct, waitStep: Wait, props: TestApplicationSFProps) {
   const parallelState = new Parallel(scope, "SignUpValidation", {});
   parallelState.branch(
-    new LambdaInvoke(scope, "Verify Customer Submitted", {
-      lambdaFunction: props.verifyLambdaFunction,
-      payload: {
-        type: InputType.OBJECT,
-        value: {  
-          "cognitoIdentityId.$": "$.cognitoIdentityId",
-          "eventName": "Customer.Accepted"
-        }}
-    })
+    verifyCustSubmitted(scope, props)
   );
   parallelState.branch(
-    new LambdaInvoke(scope, "Verify Customer Accepted", {
-      lambdaFunction: props.verifyLambdaFunction,
-      payload: {
-        type: InputType.OBJECT,
-        value: {  
-          "cognitoIdentityId.$": "$.cognitoIdentityId",
-          "eventName": "Customer.Submitted"
-        }}
-    })
+    verifyCustAccept(scope, props)
   );
 
   waitStep.next(parallelState);
+}
+
+function verifyCustAccept(scope: Construct, props: TestApplicationSFProps): IChainable {
+  
+  return new DynamoGetItem(scope, "Verify Customer Accepted", {
+    integrationPattern: IntegrationPattern.REQUEST_RESPONSE,
+    table: props.testDataTable,
+    key: {
+      "PK": DynamoAttributeValue.fromString("$.cognitoIdentityId"),
+      "SK": DynamoAttributeValue.fromString("Customer.Accepted")
+    }
+  
+  })
+
+}
+
+function verifyCustSubmitted(scope: Construct, props: TestApplicationSFProps): IChainable {
+  return new LambdaInvoke(scope, "Verify Customer Submitted", {
+    lambdaFunction: props.verifyLambdaFunction,
+    payload: {
+      type: InputType.OBJECT,
+      value: {
+        "cognitoIdentityId.$": "$.cognitoIdentityId",
+        "eventName": "Customer.Accepted"
+      }
+    }
+  });
 }

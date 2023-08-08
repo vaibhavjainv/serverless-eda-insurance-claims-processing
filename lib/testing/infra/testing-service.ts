@@ -67,7 +67,8 @@ export class TestingService extends Construct {
 
     new TestApplicationSF(this, "TestApplicationSF", {
       testLoginLambdaFunction,
-      verifyLambdaFunction
+      verifyLambdaFunction,
+      testDataTable
     });
 
     //Create Save Events Lambda Function
