@@ -52,9 +52,7 @@ export class TestApplicationSF extends StateMachine {
 
     const waitStep = addWaitStep(signUpLambdaStep, scope);
 
-    const passStep = addPassStep(waitStep, scope)
-
-    addSignUpValidationStep(scope, passStep, props);
+    addSignUpValidationStep(scope, waitStep, props);
 
     super(scope, id, {
       definition: signUpLambdaStep,
@@ -67,19 +65,6 @@ export class TestApplicationSF extends StateMachine {
       tracingEnabled: true,
     });
   }
-}
-
-function addPassStep(waitStep: INextable , scope: Construct) {
-  const passStep = new Pass(scope, "Pass", {
-  parameters:{
-    "key": {
-      "S.$": "$.cognitoIdentityId"
-    },
-    "cognitoIdentityId.$": "$.cognitoIdentityId"
-  }    
-  });
-  waitStep.next(passStep);
-  return passStep;
 }
 
 function addWaitStep(signUpLambdaStep: LambdaInvoke, scope: Construct) {
@@ -123,7 +108,7 @@ function verifyCustAccept(scope: Construct, props: TestApplicationSFProps): ICha
     integrationPattern: IntegrationPattern.REQUEST_RESPONSE,
     table: props.testDataTable,
     key: {
-      PK: DynamoAttributeValue.mapFromJsonPath("$.key"),
+      PK: DynamoAttributeValue.fromString(JsonPath.stringAt('$.cognitoIdentityId')),
       SK: DynamoAttributeValue.fromString("Customer.Accepted"),
     },
   });
