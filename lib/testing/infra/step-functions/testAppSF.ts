@@ -3,11 +3,14 @@
 
 import {
   IChainable,
+  INextable,
   InputType,
   IntegrationPattern,
   JsonPath,
   LogLevel,
   Parallel,
+  Pass,
+  State,
   StateMachine,
   StateMachineType,
   Timeout,
@@ -49,7 +52,9 @@ export class TestApplicationSF extends StateMachine {
 
     const waitStep = addWaitStep(signUpLambdaStep, scope);
 
-    addSignUpValidationStep(scope, waitStep, props);
+    const passStep = addPassStep(waitStep, scope)
+
+    addSignUpValidationStep(scope, passStep, props);
 
     super(scope, id, {
       definition: signUpLambdaStep,
@@ -62,6 +67,19 @@ export class TestApplicationSF extends StateMachine {
       tracingEnabled: true,
     });
   }
+}
+
+function addPassStep(waitStep: INextable , scope: Construct) {
+  const passStep = new Pass(scope, "Pass", {
+  parameters:{
+    "key": {
+      "S.$": "$.cognitoIdentityId"
+    },
+    "cognitoIdentityId.$": "$.cognitoIdentityId"
+  }    
+  });
+  waitStep.next(passStep);
+  return passStep;
 }
 
 function addWaitStep(signUpLambdaStep: LambdaInvoke, scope: Construct) {
@@ -92,7 +110,7 @@ function createSignUpLambdaStep(scope: Construct, props: TestApplicationSFProps)
     // taskTimeout: Timeout.duration(Duration.seconds(60)),
   });
 }
-function addSignUpValidationStep(scope: Construct, waitStep: Wait, props: TestApplicationSFProps) {
+function addSignUpValidationStep(scope: Construct, waitStep: INextable, props: TestApplicationSFProps) {
   const parallelState = new Parallel(scope, "SignUpValidation", {});
   parallelState.branch(verifyCustSubmitted(scope, props));
   parallelState.branch(verifyCustAccept(scope, props));
@@ -105,7 +123,7 @@ function verifyCustAccept(scope: Construct, props: TestApplicationSFProps): ICha
     integrationPattern: IntegrationPattern.REQUEST_RESPONSE,
     table: props.testDataTable,
     key: {
-      PK: DynamoAttributeValue.fromString("$.cognitoIdentityId"),
+      PK: DynamoAttributeValue.mapFromJsonPath("$.key"),
       SK: DynamoAttributeValue.fromString("Customer.Accepted"),
     },
   });
