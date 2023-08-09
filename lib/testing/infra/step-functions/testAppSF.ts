@@ -147,7 +147,7 @@ function verifyCustSubmitted(scope: Construct, props: TestApplicationSFProps): I
     },
   });
 
-  const choiseStep = new Choice(scope, "Validate Customer Accepted Event")
+  const choiseStep = new Choice(scope, "Validate Customer Submitted Event")
     .when(
       Condition.and(
         Condition.isNotNull(JsonPath.stringAt("$.Item.DATA.M.cognitoIdentityId.S")),
