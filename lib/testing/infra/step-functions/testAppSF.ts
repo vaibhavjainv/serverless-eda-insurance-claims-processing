@@ -123,11 +123,11 @@ function verifyCustAccept(scope: Construct, props: TestApplicationSFProps): ICha
         Condition.isNotNull(JsonPath.stringAt("$.Item.DATA.M.carImageUrl.S"))
       ),
       new Pass(scope, "Image URLs exist", {
-        parameters:{
+        parameters: {
           "driversLicenseImageUrl.$": JsonPath.stringAt("$.Item.DATA.M.driversLicenseImageUrl.S"),
           "carImageUrl.$": JsonPath.stringAt("$.Item.DATA.M.carImageUrl.S"),
-          "cognitoIdentityId.$":   JsonPath.stringAt("$.Item.PK.S")
-        }
+          "cognitoIdentityId.$": JsonPath.stringAt("$.Item.PK.S"),
+        },
       })
     )
     .otherwise(new Fail(scope, "Image URLs do not exist"));
@@ -148,20 +148,20 @@ function verifyCustSubmitted(scope: Construct, props: TestApplicationSFProps): I
   });
 
   const choiseStep = new Choice(scope, "Validate Customer Accepted Event")
-  .when(
-    Condition.and(
-      Condition.isNotNull(JsonPath.stringAt("$.Item.DATA.M.cognitoIdentityId.S")),
-      Condition.isNotNull(JsonPath.stringAt("$.Item.SK.S"))
-    ),
-    new Pass(scope, "Data is valid", {
-      parameters: {
-        "cognitoIdentityId.$": JsonPath.stringAt("$.Item.DATA.M.cognitoIdentityId.S"),
-      }
-    })
-  )
-  .otherwise(new Fail(scope, "Data is invalid"));
+    .when(
+      Condition.and(
+        Condition.isNotNull(JsonPath.stringAt("$.Item.DATA.M.cognitoIdentityId.S")),
+        Condition.isNotNull(JsonPath.stringAt("$.Item.SK.S"))
+      ),
+      new Pass(scope, "Data is valid", {
+        parameters: {
+          "cognitoIdentityId.$": JsonPath.stringAt("$.Item.DATA.M.cognitoIdentityId.S"),
+        },
+      })
+    )
+    .otherwise(new Fail(scope, "Data is invalid"));
 
-getItemStep.next(choiseStep);
+  getItemStep.next(choiseStep);
 
   return getItemStep;
 }
