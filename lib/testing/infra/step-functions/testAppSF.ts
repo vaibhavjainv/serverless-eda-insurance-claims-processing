@@ -115,14 +115,12 @@ function verifyCustAccept(scope: Construct, props: TestApplicationSFProps): ICha
 }
 
 function verifyCustSubmitted(scope: Construct, props: TestApplicationSFProps): IChainable {
-  return new LambdaInvoke(scope, "Verify Customer Submitted", {
-    lambdaFunction: props.verifyLambdaFunction,
-    payload: {
-      type: InputType.OBJECT,
-      value: {
-        "cognitoIdentityId.$": "$.cognitoIdentityId",
-        eventName: "Customer.Accepted",
-      },
+  return new DynamoGetItem(scope, "Verify Customer Submitted", {
+    integrationPattern: IntegrationPattern.REQUEST_RESPONSE,
+    table: props.testDataTable,
+    key: {
+      PK: DynamoAttributeValue.fromString(JsonPath.stringAt('$.cognitoIdentityId')),
+      SK: DynamoAttributeValue.fromString("Customer.Submitted"),
     },
   });
 }
