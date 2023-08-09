@@ -2,6 +2,9 @@
 // SPDX-License-Identifier: MIT-0
 
 import {
+  Choice,
+  Condition,
+  Fail,
   IChainable,
   INextable,
   InputType,
@@ -104,7 +107,7 @@ function addSignUpValidationStep(scope: Construct, waitStep: INextable, props: T
 }
 
 function verifyCustAccept(scope: Construct, props: TestApplicationSFProps): IChainable {
-  return new DynamoGetItem(scope, "Verify Customer Accepted", {
+  const getItemStep =  new DynamoGetItem(scope, "Get customer accepted event", {
     integrationPattern: IntegrationPattern.REQUEST_RESPONSE,
     table: props.testDataTable,
     key: {
@@ -112,10 +115,18 @@ function verifyCustAccept(scope: Construct, props: TestApplicationSFProps): ICha
       SK: DynamoAttributeValue.fromString("Customer.Accepted"),
     },
   });
+
+  const choiseStep = new Choice(scope, "Validate Customer Accepted Event")
+    .when(Condition.isNotNull(JsonPath.stringAt('$.Item.DATA.M.driversLicenseImageUrl.S')), new Pass(scope, "Driver license image exists"))
+    .otherwise(new Fail(scope, "Driver license image does not exist"));
+
+    getItemStep.next(choiseStep);
+
+  return getItemStep;
 }
 
 function verifyCustSubmitted(scope: Construct, props: TestApplicationSFProps): IChainable {
-  return new DynamoGetItem(scope, "Verify Customer Submitted", {
+  const getItemStep =  new DynamoGetItem(scope, "Get customer submitted event", {
     integrationPattern: IntegrationPattern.REQUEST_RESPONSE,
     table: props.testDataTable,
     key: {
@@ -123,4 +134,6 @@ function verifyCustSubmitted(scope: Construct, props: TestApplicationSFProps): I
       SK: DynamoAttributeValue.fromString("Customer.Submitted"),
     },
   });
+
+  return getItemStep;
 }
