@@ -107,33 +107,61 @@ function addSignUpValidationStep(scope: Construct, waitStep: INextable, props: T
 }
 
 function verifyCustAccept(scope: Construct, props: TestApplicationSFProps): IChainable {
-  const getItemStep =  new DynamoGetItem(scope, "Get customer accepted event", {
+  const getItemStep = new DynamoGetItem(scope, "Get customer accepted event", {
     integrationPattern: IntegrationPattern.REQUEST_RESPONSE,
     table: props.testDataTable,
     key: {
-      PK: DynamoAttributeValue.fromString(JsonPath.stringAt('$.cognitoIdentityId')),
+      PK: DynamoAttributeValue.fromString(JsonPath.stringAt("$.cognitoIdentityId")),
       SK: DynamoAttributeValue.fromString("Customer.Accepted"),
     },
   });
 
   const choiseStep = new Choice(scope, "Validate Customer Accepted Event")
-    .when(Condition.isNotNull(JsonPath.stringAt('$.Item.DATA.M.driversLicenseImageUrl.S')), new Pass(scope, "Driver license image exists"))
-    .otherwise(new Fail(scope, "Driver license image does not exist"));
+    .when(
+      Condition.and(
+        Condition.isNotNull(JsonPath.stringAt("$.Item.DATA.M.driversLicenseImageUrl.S")),
+        Condition.isNotNull(JsonPath.stringAt("$.Item.DATA.M.carImageUrl.S"))
+      ),
+      new Pass(scope, "Image URLs exist", {
+        parameters:{
+          "driversLicenseImageUrl.$": JsonPath.stringAt("$.Item.DATA.M.driversLicenseImageUrl.S"),
+          "carImageUrl.$": JsonPath.stringAt("$.Item.DATA.M.carImageUrl.S"),
+          "cognitoIdentityId.$":   JsonPath.stringAt("$.Item.PK.S")
+        }
+      })
+    )
+    .otherwise(new Fail(scope, "Image URLs do not exist"));
 
-    getItemStep.next(choiseStep);
+  getItemStep.next(choiseStep);
 
   return getItemStep;
 }
 
 function verifyCustSubmitted(scope: Construct, props: TestApplicationSFProps): IChainable {
-  const getItemStep =  new DynamoGetItem(scope, "Get customer submitted event", {
+  const getItemStep = new DynamoGetItem(scope, "Get customer submitted event", {
     integrationPattern: IntegrationPattern.REQUEST_RESPONSE,
     table: props.testDataTable,
     key: {
-      PK: DynamoAttributeValue.fromString(JsonPath.stringAt('$.cognitoIdentityId')),
+      PK: DynamoAttributeValue.fromString(JsonPath.stringAt("$.cognitoIdentityId")),
       SK: DynamoAttributeValue.fromString("Customer.Submitted"),
     },
   });
+
+  const choiseStep = new Choice(scope, "Validate Customer Accepted Event")
+  .when(
+    Condition.and(
+      Condition.isNotNull(JsonPath.stringAt("$.Item.DATA.M.cognitoIdentityId.S")),
+      Condition.isNotNull(JsonPath.stringAt("$.Item.SK.S"))
+    ),
+    new Pass(scope, "Data is valid", {
+      parameters: {
+        "cognitoIdentityId.$": JsonPath.stringAt("$.Item.DATA.M.cognitoIdentityId.S"),
+      }
+    })
+  )
+  .otherwise(new Fail(scope, "Data is invalid"));
+
+getItemStep.next(choiseStep);
 
   return getItemStep;
 }
