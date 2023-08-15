@@ -51,23 +51,19 @@ export class TestingService extends Construct {
     testDataTable.grantReadWriteData(testLoginLambdaFunction);
 
     // Verification Lambda Functions
-    const verifyLambdaFunction = new NodejsFunction(this, "VerifyEvents", {
+    const uploadFilesLambdaFunction = new NodejsFunction(this, "UploadFiles", {
       runtime: Runtime.NODEJS_18_X,
       memorySize: 512,
       logRetention: RetentionDays.ONE_WEEK,
       handler: "handler",
-      entry: `${__dirname}/../app/handlers/verify.js`,
-      environment: {
-        TEST_DATA_TABLE_NAME: testDataTable.tableName,
-      },
+      entry: `${__dirname}/../app/handlers/uploadFiles.js`,
     });
 
-    testDataTable.grantReadWriteData(verifyLambdaFunction);
   
 
     new TestApplicationSF(this, "TestApplicationSF", {
       testLoginLambdaFunction,
-      verifyLambdaFunction,
+      uploadFilesLambdaFunction,
       testDataTable
     });
 

@@ -13,16 +13,13 @@ import {
   LogLevel,
   Parallel,
   Pass,
-  State,
   StateMachine,
   StateMachineType,
-  Timeout,
   Wait,
   WaitTime,
 } from "aws-cdk-lib/aws-stepfunctions";
 import { Construct } from "constructs";
 import {
-  LambdaInvocationType,
   LambdaInvoke,
   DynamoGetItem,
   DynamoAttributeValue,
@@ -35,7 +32,7 @@ import { Table } from "aws-cdk-lib/aws-dynamodb";
 
 export interface TestApplicationSFProps {
   testLoginLambdaFunction: NodejsFunction;
-  verifyLambdaFunction: NodejsFunction;
+  uploadFilesLambdaFunction: NodejsFunction;
   testDataTable: Table;
 }
 
@@ -55,7 +52,9 @@ export class TestApplicationSF extends StateMachine {
 
     const waitStep = addWaitStep(signUpLambdaStep, scope);
 
-    addSignUpValidationStep(scope, waitStep, props);
+    const signUpValidationStep = addSignUpValidationStep(scope, waitStep, props);
+
+    addFileUploadStep(signUpValidationStep, scope, props);
 
     super(scope, id, {
       definition: signUpLambdaStep,
@@ -98,12 +97,14 @@ function createSignUpLambdaStep(scope: Construct, props: TestApplicationSFProps)
     // taskTimeout: Timeout.duration(Duration.seconds(60)),
   });
 }
-function addSignUpValidationStep(scope: Construct, waitStep: INextable, props: TestApplicationSFProps) {
+function addSignUpValidationStep(scope: Construct, waitStep: INextable, props: TestApplicationSFProps): INextable {
   const parallelState = new Parallel(scope, "SignUpValidation", {});
   parallelState.branch(verifyCustSubmitted(scope, props));
   parallelState.branch(verifyCustAccept(scope, props));
 
   waitStep.next(parallelState);
+
+  return parallelState;
 }
 
 function verifyCustAccept(scope: Construct, props: TestApplicationSFProps): IChainable {
@@ -164,4 +165,12 @@ function verifyCustSubmitted(scope: Construct, props: TestApplicationSFProps): I
   getItemStep.next(choiseStep);
 
   return getItemStep;
+}
+
+function addFileUploadStep(signUpValidationStep: INextable, scope: Construct, props: TestApplicationSFProps) {
+  const uploadFilesStep = new LambdaInvoke(scope, "Upload Files", {
+    lambdaFunction: props.uploadFilesLambdaFunction,
+  });
+  signUpValidationStep.next(uploadFilesStep);
+  return uploadFilesStep;
 }
