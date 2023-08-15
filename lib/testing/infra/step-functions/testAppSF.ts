@@ -125,9 +125,9 @@ function verifyCustAccept(scope: Construct, props: TestApplicationSFProps): ICha
       ),
       new Pass(scope, "Image URLs exist", {
         parameters: {
-          "driversLicenseImageUrl.$": JsonPath.stringAt("$.Item.DATA.M.driversLicenseImageUrl.S"),
-          "carImageUrl.$": JsonPath.stringAt("$.Item.DATA.M.carImageUrl.S"),
-          "cognitoIdentityId.$": JsonPath.stringAt("$.Item.PK.S"),
+          "driversLicenseImageUrl": JsonPath.stringAt("$.Item.DATA.M.driversLicenseImageUrl.S"),
+          "carImageUrl": JsonPath.stringAt("$.Item.DATA.M.carImageUrl.S"),
+          "cognitoIdentityId": JsonPath.stringAt("$.Item.PK.S"),
         },
       })
     )
@@ -156,7 +156,7 @@ function verifyCustSubmitted(scope: Construct, props: TestApplicationSFProps): I
       ),
       new Pass(scope, "Data is valid", {
         parameters: {
-          "cognitoIdentityId.$": JsonPath.stringAt("$.Item.DATA.M.cognitoIdentityId.S"),
+          "cognitoIdentityId": JsonPath.stringAt("$.Item.DATA.M.cognitoIdentityId.S"),
         },
       })
     )
