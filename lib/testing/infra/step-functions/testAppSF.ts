@@ -98,9 +98,16 @@ function createSignUpLambdaStep(scope: Construct, props: TestApplicationSFProps)
   });
 }
 function addSignUpValidationStep(scope: Construct, waitStep: INextable, props: TestApplicationSFProps): INextable {
-  const parallelState = new Parallel(scope, "SignUpValidation", {});
+  const parallelState = new Parallel(scope, "SignUpValidation", {
+    resultSelector:{
+      "driversLicenseImageUrl": JsonPath.stringAt("$[0].driversLicenseImageUrl"),
+      "carImageUrl": JsonPath.stringAt("$[0].carImageUrl"),
+      "cognitoIdentityId": JsonPath.stringAt("$[0].cognitoIdentityId"),
+    }
+  });
   parallelState.branch(verifyCustSubmitted(scope, props));
   parallelState.branch(verifyCustAccept(scope, props));
+
 
   waitStep.next(parallelState);
 
