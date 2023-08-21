@@ -93,6 +93,8 @@ function createSignUpLambdaStep(scope: Construct, props: TestApplicationSFProps)
     resultSelector: {
       "cognitoIdentityId.$": "$.Payload.cognitoIdentityId",
     },
+    resultPath:"$.cognitoIdentityId",
+    
     // integrationPattern: IntegrationPattern.WAIT_FOR_TASK_TOKEN,
     // taskTimeout: Timeout.duration(Duration.seconds(60)),
   });
@@ -100,9 +102,9 @@ function createSignUpLambdaStep(scope: Construct, props: TestApplicationSFProps)
 function addSignUpValidationStep(scope: Construct, waitStep: INextable, props: TestApplicationSFProps): INextable {
   const parallelState = new Parallel(scope, "SignUpValidation", {
     resultSelector:{
-      "driversLicenseImageUrl": JsonPath.stringAt("$[0].driversLicenseImageUrl"),
-      "carImageUrl": JsonPath.stringAt("$[0].carImageUrl"),
-      "cognitoIdentityId": JsonPath.stringAt("$[0].cognitoIdentityId"),
+      "driversLicenseImageUrl": JsonPath.stringAt("$[1].driversLicenseImageUrl"),
+      "carImageUrl": JsonPath.stringAt("$[1].carImageUrl"),
+      "cognitoIdentityId": JsonPath.stringAt("$[1].cognitoIdentityId"),
     }
   });
   parallelState.branch(verifyCustSubmitted(scope, props));
