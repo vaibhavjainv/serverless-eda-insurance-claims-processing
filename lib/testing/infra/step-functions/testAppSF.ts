@@ -121,7 +121,7 @@ function verifyCustAccept(scope: Construct, props: TestApplicationSFProps): ICha
     integrationPattern: IntegrationPattern.REQUEST_RESPONSE,
     table: props.testDataTable,
     key: {
-      PK: DynamoAttributeValue.fromString(JsonPath.stringAt("$.cognitoIdentityId")),
+      PK: DynamoAttributeValue.fromString(JsonPath.stringAt("$.cognitoIdentityId.cognitoIdentityId")),
       SK: DynamoAttributeValue.fromString("Customer.Accepted"),
     },
   });
@@ -152,7 +152,7 @@ function verifyCustSubmitted(scope: Construct, props: TestApplicationSFProps): I
     integrationPattern: IntegrationPattern.REQUEST_RESPONSE,
     table: props.testDataTable,
     key: {
-      PK: DynamoAttributeValue.fromString(JsonPath.stringAt("$.cognitoIdentityId")),
+      PK: DynamoAttributeValue.fromString(JsonPath.stringAt("$.cognitoIdentityId.cognitoIdentityId")),
       SK: DynamoAttributeValue.fromString("Customer.Submitted"),
     },
   });
