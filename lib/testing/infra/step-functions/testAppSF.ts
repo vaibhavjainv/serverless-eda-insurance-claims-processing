@@ -109,6 +109,7 @@ function addSignUpValidationStep(scope: Construct, waitStep: INextable, props: T
   });
   parallelState.branch(verifyCustSubmitted(scope, props));
   parallelState.branch(verifyCustAccept(scope, props));
+  parallelState.branch(passImageUrls(scope, props));
 
 
   waitStep.next(parallelState);
@@ -182,4 +183,12 @@ function addFileUploadStep(signUpValidationStep: INextable, scope: Construct, pr
   });
   signUpValidationStep.next(uploadFilesStep);
   return uploadFilesStep;
+}
+
+function passImageUrls(scope: Construct, props: TestApplicationSFProps): IChainable {
+  return new Pass(scope, "Fetch additional data", {
+    parameters: {
+      "dlImageURL": JsonPath.stringAt("$.dlImageURL"),
+    },
+  })
 }
