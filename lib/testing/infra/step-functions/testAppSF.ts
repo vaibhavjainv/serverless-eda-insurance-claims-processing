@@ -105,11 +105,12 @@ function addSignUpValidationStep(scope: Construct, waitStep: INextable, props: T
       "driversLicenseImageUrl": JsonPath.stringAt("$[1].driversLicenseImageUrl"),
       "carImageUrl": JsonPath.stringAt("$[1].carImageUrl"),
       "cognitoIdentityId": JsonPath.stringAt("$[1].cognitoIdentityId"),
+      "dlImageSrcURL": JsonPath.stringAt("$[2].dlImageSrcURL"),
     }
   });
   parallelState.branch(verifyCustSubmitted(scope, props));
   parallelState.branch(verifyCustAccept(scope, props));
-  parallelState.branch(passImageUrls(scope, props));
+  parallelState.branch(passImageUrls(scope));
 
 
   waitStep.next(parallelState);
@@ -185,10 +186,10 @@ function addFileUploadStep(signUpValidationStep: INextable, scope: Construct, pr
   return uploadFilesStep;
 }
 
-function passImageUrls(scope: Construct, props: TestApplicationSFProps): IChainable {
+function passImageUrls(scope: Construct): IChainable {
   return new Pass(scope, "Fetch additional data", {
     parameters: {
-      "dlImageURL": JsonPath.stringAt("$.dlImageURL"),
+      "dlImageSrcURL": JsonPath.stringAt("$.dlImageSrcURL"),
     },
   })
 }
