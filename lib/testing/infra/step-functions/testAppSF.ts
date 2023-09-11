@@ -106,6 +106,7 @@ function addSignUpValidationStep(scope: Construct, waitStep: INextable, props: T
       "carImageUrl": JsonPath.stringAt("$[1].carImageUrl"),
       "cognitoIdentityId": JsonPath.stringAt("$[1].cognitoIdentityId"),
       "dlImageSrcURL": JsonPath.stringAt("$[2].dlImageSrcURL"),
+      "carImageSrcURL": JsonPath.stringAt("$[2].carImageSrcURL"),
     }
   });
   parallelState.branch(verifyCustSubmitted(scope, props));
@@ -189,7 +190,8 @@ function addFileUploadStep(signUpValidationStep: INextable, scope: Construct, pr
 function passImageUrls(scope: Construct): IChainable {
   return new Pass(scope, "Fetch additional data", {
     parameters: {
-      "dlImageSrcURL": JsonPath.stringAt("$.dlImageSrcURL"),
+      "dlImageSrcURL": JsonPath.stringAt("$.carImageSrcURL"),
+      "carImageSrcURL": JsonPath.stringAt("$.dlImageSrcURL"),
     },
   })
 }
