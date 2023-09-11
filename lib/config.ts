@@ -5,7 +5,7 @@ const config = {
   // Green Color Car
   // Return: { "Predictions": [{ "Name": "green", "Confidence": 95.76799774169922 }] }
   COLOR_DETECT_API:
-    "https://webhook.site/a991642a-33f3-44a1-a037-abf395b84113",
+    "https://webhook.site/9814024b-508c-44b3-89bd-1c66a499f1d5",
 
   // Red Color Car
   // Return: { "Predictions": [{ "Name": "red", "Confidence": 97.56799774169922 }] }
@@ -18,7 +18,7 @@ const config = {
   // Bumper Dent
   // Return: { "Predictions": [{ "Name": "bumper_dent", "Confidence": 84.26200103759766 }] }
   DAMAGE_DETECT_API:
-    "https://webhook.site/fae02cbf-75e8-4907-8063-526ae5d5dcaa",
+    "https://webhook.site/ca0bfd72-cf5c-4f00-8c8a-6df4852bfe98",
 };
 
 export default config;
