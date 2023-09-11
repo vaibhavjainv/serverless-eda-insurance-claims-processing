@@ -190,8 +190,8 @@ function addFileUploadStep(signUpValidationStep: INextable, scope: Construct, pr
 function passImageUrls(scope: Construct): IChainable {
   return new Pass(scope, "Fetch additional data", {
     parameters: {
-      "dlImageSrcURL": JsonPath.stringAt("$.carImageSrcURL"),
-      "carImageSrcURL": JsonPath.stringAt("$.dlImageSrcURL"),
+      "dlImageSrcURL": JsonPath.stringAt("$.dlImageSrcURL"),
+      "carImageSrcURL": JsonPath.stringAt("$.carImageSrcURL"),
     },
   })
 }
