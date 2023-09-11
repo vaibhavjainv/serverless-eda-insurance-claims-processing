@@ -70,7 +70,7 @@ export class TestApplicationSF extends StateMachine {
 }
 
 function addWaitStep(signUpLambdaStep: LambdaInvoke, scope: Construct) {
-  const waitStep = new Wait(scope, "WaitForSignUp", { time: WaitTime.duration(Duration.seconds(10)) });
+  const waitStep = new Wait(scope, "WaitForSignUp", { time: WaitTime.duration(Duration.seconds(5)) });
   signUpLambdaStep.next(waitStep);
   return waitStep;
 }
