@@ -218,7 +218,7 @@ function addDocumentsEventValidationStep(prevStep: INextable, scope: Construct, 
     resultSelector: {
       customerId: JsonPath.stringAt("$[0].customerId"),
     },
-    resultPath: "$.fnolParams.fnoldData",
+    resultPath: "$.fnolParams.fnoldData.personalInformation.customerId",
   });
   parallelState.branch(verifyDLProcessed(scope, props));
   parallelState.branch(verifyCarProcessed(scope, props));
