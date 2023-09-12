@@ -25,7 +25,13 @@ import { RetentionDays } from "aws-cdk-lib/aws-logs";
 import { Duration, RemovalPolicy } from "aws-cdk-lib";
 import { NodejsFunction } from "aws-cdk-lib/aws-lambda-nodejs";
 import { Table } from "aws-cdk-lib/aws-dynamodb";
-import { verifyDLProcessed, verifyCarProcessed, verifyFraudNotDetectedDL, verifyFraudNotDetectedCar, verifyCustomerDocumentUpdated } from "./verificationSteps";
+import {
+  verifyDLProcessed,
+  verifyCarProcessed,
+  verifyFraudNotDetectedDL,
+  verifyFraudNotDetectedCar,
+  verifyCustomerDocumentUpdated,
+} from "./verificationSteps";
 
 export interface TestApplicationSFProps {
   testLoginLambdaFunction: NodejsFunction;
@@ -109,8 +115,7 @@ function addSignUpValidationStep(scope: Construct, waitStep: INextable, props: T
       dlImageSrcURL: JsonPath.stringAt("$[2].dlImageSrcURL"),
       carImageSrcURL: JsonPath.stringAt("$[2].carImageSrcURL"),
       fnolParams: JsonPath.objectAt("$[2].fnolParams"),
-    }
-    ,
+    },
   });
   parallelState.branch(verifyCustSubmitted(scope, props));
   parallelState.branch(verifyCustAccept(scope, props));
@@ -184,7 +189,7 @@ function verifyCustSubmitted(scope: Construct, props: TestApplicationSFProps): I
 function addFileUploadStep(signUpValidationStep: INextable, scope: Construct, props: TestApplicationSFProps) {
   const uploadFilesStep = new LambdaInvoke(scope, "Upload Files", {
     lambdaFunction: props.uploadFilesLambdaFunction,
-    resultPath: JsonPath.DISCARD
+    resultPath: JsonPath.DISCARD,
   });
   signUpValidationStep.next(uploadFilesStep);
   return uploadFilesStep;
@@ -195,21 +200,26 @@ function fetchAddnlData(scope: Construct): IChainable {
     parameters: {
       dlImageSrcURL: JsonPath.stringAt("$.dlImageSrcURL"),
       carImageSrcURL: JsonPath.stringAt("$.carImageSrcURL"),
-      fnolParams:{
+      fnolParams: {
         userPoolId: JsonPath.stringAt("$.userPoolId"),
         clientId: JsonPath.stringAt("$.clientId"),
         userName: JsonPath.stringAt("$.userName"),
         password: JsonPath.stringAt("$.password"),
         identityPoolId: JsonPath.stringAt("$.identityPoolId"),
-        cognitoIdentityId:  JsonPath.stringAt("$.cognitoIdentityId.cognitoIdentityId"),
-        fnoldData: JsonPath.objectAt("$.fnolData")
-      }
+        cognitoIdentityId: JsonPath.stringAt("$.cognitoIdentityId.cognitoIdentityId"),
+        fnoldData: JsonPath.objectAt("$.fnolData"),
+      },
     },
   });
 }
 
 function addDocumentsEventValidationStep(prevStep: INextable, scope: Construct, props: TestApplicationSFProps) {
-  const parallelState = new Parallel(scope, "DocumentsEventValidation", {});
+  const parallelState = new Parallel(scope, "DocumentsEventValidation", {
+    resultSelector: {
+      customerId: JsonPath.stringAt("$[0].customerId"),
+    },
+    resultPath: "$.fnolParams.fnoldData.key",
+  });
   parallelState.branch(verifyDLProcessed(scope, props));
   parallelState.branch(verifyCarProcessed(scope, props));
   parallelState.branch(verifyFraudNotDetectedDL(scope, props));
