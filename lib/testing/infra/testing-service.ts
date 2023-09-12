@@ -11,6 +11,9 @@ import { RemovalPolicy } from "aws-cdk-lib";
 import { EventBus, Rule } from "aws-cdk-lib/aws-events";
 import { CustomerEvents } from "../../services/customer/infra/customer-events";
 import { LambdaFunction } from "aws-cdk-lib/aws-events-targets";
+import {DocumentsEvents} from "../../services/documents/infra/documents-events";
+
+
 
 export interface TestApplicationSFProps {
   eBus: EventBus;
@@ -86,7 +89,7 @@ export class TestingService extends Construct {
       eventBus: props.eBus,
       ruleName: "TestingEventBusRule",
       eventPattern: {
-        source: [CustomerEvents.CUSTOMER_SOURCE, CustomerEvents.SIGNUP_SOURCE],
+        source: [CustomerEvents.CUSTOMER_SOURCE, CustomerEvents.SIGNUP_SOURCE, DocumentsEvents.SOURCE, "fraud.service"],
       },
       targets: [new LambdaFunction(saveEventsLambdaFunction)],
     });
