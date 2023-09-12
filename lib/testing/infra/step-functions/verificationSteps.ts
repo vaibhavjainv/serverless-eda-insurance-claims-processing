@@ -22,7 +22,9 @@ export function verifyDLProcessed(scope: Construct, props: TestApplicationSFProp
       ),
       new Pass(scope, "DRIVERS_LICENSE event data is valid", {
         result: {
-          value: {},
+          value: {
+            customerId: JsonPath.stringAt("$.Item.DATA.M.customerId.S")
+          },
         },
       })
     )
