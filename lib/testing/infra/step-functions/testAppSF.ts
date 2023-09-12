@@ -25,7 +25,7 @@ import { RetentionDays } from "aws-cdk-lib/aws-logs";
 import { Duration, RemovalPolicy } from "aws-cdk-lib";
 import { NodejsFunction } from "aws-cdk-lib/aws-lambda-nodejs";
 import { Table } from "aws-cdk-lib/aws-dynamodb";
-import { verifyDLProcessed, verifyCarProcessed, verifyFraudNotDetectedDL } from "./verificationSteps";
+import { verifyDLProcessed, verifyCarProcessed, verifyFraudNotDetectedDL, verifyFraudNotDetectedCar, verifyCustomerDocumentUpdated } from "./verificationSteps";
 
 export interface TestApplicationSFProps {
   testLoginLambdaFunction: NodejsFunction;
@@ -204,6 +204,8 @@ function addDocumentsEventValidationStep(prevStep: INextable, scope: Construct, 
   parallelState.branch(verifyDLProcessed(scope, props));
   parallelState.branch(verifyCarProcessed(scope, props));
   parallelState.branch(verifyFraudNotDetectedDL(scope, props));
+  parallelState.branch(verifyFraudNotDetectedCar(scope, props));
+  parallelState.branch(verifyCustomerDocumentUpdated(scope, props));
 
   prevStep.next(parallelState);
 
