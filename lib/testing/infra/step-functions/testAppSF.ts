@@ -54,7 +54,9 @@ export class TestApplicationSF extends StateMachine {
 
     const signUpValidationStep = addSignUpValidationStep(scope, waitStep, props);
 
-    addFileUploadStep(signUpValidationStep, scope, props);
+    const fileUploadStep = addFileUploadStep(signUpValidationStep, scope, props);
+
+    addDocumentsEventValidationStep(fileUploadStep, scope, props);
 
     super(scope, id, {
       definition: signUpLambdaStep,
@@ -194,4 +196,43 @@ function passImageUrls(scope: Construct): IChainable {
       "carImageSrcURL": JsonPath.stringAt("$.carImageSrcURL"),
     },
   })
+}
+
+function addDocumentsEventValidationStep(fileUploadStep: LambdaInvoke, scope: Construct, props: TestApplicationSFProps) {
+  const parallelState = new Parallel(scope, "DocumentsEventValidation", {
+  });
+  parallelState.branch(verifyDLProcessed(scope, props));
+
+  fileUploadStep.next(parallelState);
+
+  return parallelState;
+}
+
+function verifyDLProcessed(scope: Construct, props: TestApplicationSFProps): IChainable {
+  const getItemStep = new DynamoGetItem(scope, "Get Document.Processed.DRIVERS_LICENSE", {
+    integrationPattern: IntegrationPattern.REQUEST_RESPONSE,
+    table: props.testDataTable,
+    key: {
+      PK: DynamoAttributeValue.fromString(JsonPath.stringAt("$.cognitoIdentityId.cognitoIdentityId")),
+      SK: DynamoAttributeValue.fromString("Document.Processed.DRIVERS_LICENSE"),
+    },
+  });
+
+  // const choiseStep = new Choice(scope, "Validate Customer Submitted Event")
+  //   .when(
+  //     Condition.and(
+  //       Condition.isNotNull(JsonPath.stringAt("$.Item.DATA.M.cognitoIdentityId.S")),
+  //       Condition.isNotNull(JsonPath.stringAt("$.Item.SK.S"))
+  //     ),
+  //     new Pass(scope, "Data is valid", {
+  //       parameters: {
+  //         "cognitoIdentityId": JsonPath.stringAt("$.Item.DATA.M.cognitoIdentityId.S"),
+  //       },
+  //     })
+  //   )
+  //   .otherwise(new Fail(scope, "Data is invalid"));
+
+  // getItemStep.next(choiseStep);
+
+  return getItemStep;
 }
