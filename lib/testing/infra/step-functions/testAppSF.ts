@@ -19,11 +19,7 @@ import {
   WaitTime,
 } from "aws-cdk-lib/aws-stepfunctions";
 import { Construct } from "constructs";
-import {
-  LambdaInvoke,
-  DynamoGetItem,
-  DynamoAttributeValue,
-} from "aws-cdk-lib/aws-stepfunctions-tasks";
+import { LambdaInvoke, DynamoGetItem, DynamoAttributeValue } from "aws-cdk-lib/aws-stepfunctions-tasks";
 import * as logs from "aws-cdk-lib/aws-logs";
 import { RetentionDays } from "aws-cdk-lib/aws-logs";
 import { Duration, RemovalPolicy } from "aws-cdk-lib";
@@ -37,7 +33,7 @@ export interface TestApplicationSFProps {
   testDataTable: Table;
 }
 
-let gProps: TestApplicationSFProps;
+// let gProps: TestApplicationSFProps;
 
 export class TestApplicationSF extends StateMachine {
   constructor(scope: Construct, id: string, props: TestApplicationSFProps) {
@@ -47,17 +43,19 @@ export class TestApplicationSF extends StateMachine {
       retention: RetentionDays.FIVE_DAYS,
     });
 
-    gProps = props;
+    // gProps = props;
 
     const signUpLambdaStep = createSignUpLambdaStep(scope, props);
 
-    const waitStep = addWaitStep(signUpLambdaStep, scope);
+    const waitStep = addWaitStep(signUpLambdaStep, scope, "WaitForSignUp");
 
     const signUpValidationStep = addSignUpValidationStep(scope, waitStep, props);
 
     const fileUploadStep = addFileUploadStep(signUpValidationStep, scope, props);
 
-    addDocumentsEventValidationStep(fileUploadStep, scope, props);
+    const secondWaitStep = addWaitStep(fileUploadStep, scope, "WaitForFileUpload");
+
+    addDocumentsEventValidationStep(secondWaitStep, scope, props);
 
     super(scope, id, {
       definition: signUpLambdaStep,
@@ -72,9 +70,9 @@ export class TestApplicationSF extends StateMachine {
   }
 }
 
-function addWaitStep(signUpLambdaStep: LambdaInvoke, scope: Construct) {
-  const waitStep = new Wait(scope, "WaitForSignUp", { time: WaitTime.duration(Duration.seconds(5)) });
-  signUpLambdaStep.next(waitStep);
+function addWaitStep(prevStep: LambdaInvoke, scope: Construct, id: string) {
+  const waitStep = new Wait(scope, id, { time: WaitTime.duration(Duration.seconds(5)) });
+  prevStep.next(waitStep);
   return waitStep;
 }
 
@@ -96,26 +94,25 @@ function createSignUpLambdaStep(scope: Construct, props: TestApplicationSFProps)
     resultSelector: {
       "cognitoIdentityId.$": "$.Payload.cognitoIdentityId",
     },
-    resultPath:"$.cognitoIdentityId",
-    
+    resultPath: "$.cognitoIdentityId",
+
     // integrationPattern: IntegrationPattern.WAIT_FOR_TASK_TOKEN,
     // taskTimeout: Timeout.duration(Duration.seconds(60)),
   });
 }
 function addSignUpValidationStep(scope: Construct, waitStep: INextable, props: TestApplicationSFProps): INextable {
   const parallelState = new Parallel(scope, "SignUpValidation", {
-    resultSelector:{
-      "driversLicenseImageUrl": JsonPath.stringAt("$[1].driversLicenseImageUrl"),
-      "carImageUrl": JsonPath.stringAt("$[1].carImageUrl"),
-      "cognitoIdentityId": JsonPath.stringAt("$[1].cognitoIdentityId"),
-      "dlImageSrcURL": JsonPath.stringAt("$[2].dlImageSrcURL"),
-      "carImageSrcURL": JsonPath.stringAt("$[2].carImageSrcURL"),
-    }
+    resultSelector: {
+      driversLicenseImageUrl: JsonPath.stringAt("$[1].driversLicenseImageUrl"),
+      carImageUrl: JsonPath.stringAt("$[1].carImageUrl"),
+      cognitoIdentityId: JsonPath.stringAt("$[1].cognitoIdentityId"),
+      dlImageSrcURL: JsonPath.stringAt("$[2].dlImageSrcURL"),
+      carImageSrcURL: JsonPath.stringAt("$[2].carImageSrcURL"),
+    },
   });
   parallelState.branch(verifyCustSubmitted(scope, props));
   parallelState.branch(verifyCustAccept(scope, props));
   parallelState.branch(passImageUrls(scope));
-
 
   waitStep.next(parallelState);
 
@@ -140,9 +137,9 @@ function verifyCustAccept(scope: Construct, props: TestApplicationSFProps): ICha
       ),
       new Pass(scope, "Image URLs exist", {
         parameters: {
-          "driversLicenseImageUrl": JsonPath.stringAt("$.Item.DATA.M.driversLicenseImageUrl.S"),
-          "carImageUrl": JsonPath.stringAt("$.Item.DATA.M.carImageUrl.S"),
-          "cognitoIdentityId": JsonPath.stringAt("$.Item.PK.S"),
+          driversLicenseImageUrl: JsonPath.stringAt("$.Item.DATA.M.driversLicenseImageUrl.S"),
+          carImageUrl: JsonPath.stringAt("$.Item.DATA.M.carImageUrl.S"),
+          cognitoIdentityId: JsonPath.stringAt("$.Item.PK.S"),
         },
       })
     )
@@ -171,7 +168,7 @@ function verifyCustSubmitted(scope: Construct, props: TestApplicationSFProps): I
       ),
       new Pass(scope, "Data is valid", {
         parameters: {
-          "cognitoIdentityId": JsonPath.stringAt("$.Item.DATA.M.cognitoIdentityId.S"),
+          cognitoIdentityId: JsonPath.stringAt("$.Item.DATA.M.cognitoIdentityId.S"),
         },
       })
     )
@@ -186,8 +183,8 @@ function addFileUploadStep(signUpValidationStep: INextable, scope: Construct, pr
   const uploadFilesStep = new LambdaInvoke(scope, "Upload Files", {
     lambdaFunction: props.uploadFilesLambdaFunction,
     resultSelector: {
-      "cognitoIdentityId": JsonPath.stringAt("$.Payload.cognitoIdentityId"),
-    }
+      cognitoIdentityId: JsonPath.stringAt("$.Payload.cognitoIdentityId"),
+    },
   });
   signUpValidationStep.next(uploadFilesStep);
   return uploadFilesStep;
@@ -196,21 +193,19 @@ function addFileUploadStep(signUpValidationStep: INextable, scope: Construct, pr
 function passImageUrls(scope: Construct): IChainable {
   return new Pass(scope, "Fetch additional data", {
     parameters: {
-      "dlImageSrcURL": JsonPath.stringAt("$.dlImageSrcURL"),
-      "carImageSrcURL": JsonPath.stringAt("$.carImageSrcURL"),
+      dlImageSrcURL: JsonPath.stringAt("$.dlImageSrcURL"),
+      carImageSrcURL: JsonPath.stringAt("$.carImageSrcURL"),
     },
-  })
+  });
 }
 
-function addDocumentsEventValidationStep(fileUploadStep: LambdaInvoke, scope: Construct, props: TestApplicationSFProps) {
-  const parallelState = new Parallel(scope, "DocumentsEventValidation", {
-  });
+function addDocumentsEventValidationStep(prevStep: INextable, scope: Construct, props: TestApplicationSFProps) {
+  const parallelState = new Parallel(scope, "DocumentsEventValidation", {});
   parallelState.branch(verifyDLProcessed(scope, props));
   parallelState.branch(verifyCarProcessed(scope, props));
   parallelState.branch(verifyFraudNotDetectedDL(scope, props));
 
-  fileUploadStep.next(parallelState);
+  prevStep.next(parallelState);
 
   return parallelState;
 }
-
