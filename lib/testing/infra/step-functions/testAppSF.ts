@@ -184,6 +184,9 @@ function verifyCustSubmitted(scope: Construct, props: TestApplicationSFProps): I
 function addFileUploadStep(signUpValidationStep: INextable, scope: Construct, props: TestApplicationSFProps) {
   const uploadFilesStep = new LambdaInvoke(scope, "Upload Files", {
     lambdaFunction: props.uploadFilesLambdaFunction,
+    resultSelector: {
+      "cognitoIdentityId": JsonPath.stringAt("$.Payload.cognitoIdentityId"),
+    }
   });
   signUpValidationStep.next(uploadFilesStep);
   return uploadFilesStep;
@@ -213,7 +216,7 @@ function verifyDLProcessed(scope: Construct, props: TestApplicationSFProps): ICh
     integrationPattern: IntegrationPattern.REQUEST_RESPONSE,
     table: props.testDataTable,
     key: {
-      PK: DynamoAttributeValue.fromString(JsonPath.stringAt("$.cognitoIdentityId.cognitoIdentityId")),
+      PK: DynamoAttributeValue.fromString(JsonPath.stringAt("$.cognitoIdentityId")),
       SK: DynamoAttributeValue.fromString("Document.Processed.DRIVERS_LICENSE"),
     },
   });
