@@ -205,6 +205,7 @@ function addDocumentsEventValidationStep(fileUploadStep: LambdaInvoke, scope: Co
   const parallelState = new Parallel(scope, "DocumentsEventValidation", {
   });
   parallelState.branch(verifyDLProcessed(scope, props));
+  parallelState.branch(verifyCarProcessed(scope, props));
 
   fileUploadStep.next(parallelState);
 
@@ -231,6 +232,33 @@ function verifyDLProcessed(scope: Construct, props: TestApplicationSFProps): ICh
       })
     )
     .otherwise(new Fail(scope, "DRIVERS_LICENSE event data is invalid"));
+
+  getItemStep.next(choiseStep);
+
+  return getItemStep;
+}
+
+//Document.Processed.CAR
+function verifyCarProcessed(scope: Construct, props: TestApplicationSFProps): IChainable {
+  const getItemStep = new DynamoGetItem(scope, "Validate Document.Processed.CAR Event", {
+    integrationPattern: IntegrationPattern.REQUEST_RESPONSE,
+    table: props.testDataTable,
+    key: {
+      PK: DynamoAttributeValue.fromString(JsonPath.stringAt("$.cognitoIdentityId")),
+      SK: DynamoAttributeValue.fromString("Document.Processed.CAR"),
+    },
+  });
+
+  const choiseStep = new Choice(scope, "Validate Document.Processed.CAR Data")
+    .when(
+      Condition.and(
+        Condition.isNotNull(JsonPath.stringAt("$.Item.DATA.M.documentType.S")),
+        Condition.isNotNull(JsonPath.stringAt("$.Item.DATA.M.analyzedFieldAndValues"))
+      ),
+      new Pass(scope, "CAR event data is valid", {
+      })
+    )
+    .otherwise(new Fail(scope, "CAR event data is invalid"));
 
   getItemStep.next(choiseStep);
 
