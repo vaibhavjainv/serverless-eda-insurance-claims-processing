@@ -29,6 +29,7 @@ import { RetentionDays } from "aws-cdk-lib/aws-logs";
 import { Duration, RemovalPolicy } from "aws-cdk-lib";
 import { NodejsFunction } from "aws-cdk-lib/aws-lambda-nodejs";
 import { Table } from "aws-cdk-lib/aws-dynamodb";
+import { verifyDLProcessed, verifyCarProcessed, verifyFraudNotDetectedDL } from "./verificationSteps";
 
 export interface TestApplicationSFProps {
   testLoginLambdaFunction: NodejsFunction;
@@ -213,81 +214,3 @@ function addDocumentsEventValidationStep(fileUploadStep: LambdaInvoke, scope: Co
   return parallelState;
 }
 
-function verifyDLProcessed(scope: Construct, props: TestApplicationSFProps): IChainable {
-  const getItemStep = new DynamoGetItem(scope, "Validate Document.Processed.DRIVERS_LICENSE Event", {
-    integrationPattern: IntegrationPattern.REQUEST_RESPONSE,
-    table: props.testDataTable,
-    key: {
-      PK: DynamoAttributeValue.fromString(JsonPath.stringAt("$.cognitoIdentityId")),
-      SK: DynamoAttributeValue.fromString("Document.Processed.DRIVERS_LICENSE"),
-    },
-  });
-
-  const choiseStep = new Choice(scope, "Validate Document.Processed.DRIVERS_LICENSE Data")
-    .when(
-      Condition.and(
-        Condition.isNotNull(JsonPath.stringAt("$.Item.DATA.M.documentType.S")),
-        Condition.isNotNull(JsonPath.stringAt("$.Item.DATA.M.analyzedFieldAndValues"))
-      ),
-      new Pass(scope, "DRIVERS_LICENSE event data is valid", {
-      })
-    )
-    .otherwise(new Fail(scope, "DRIVERS_LICENSE event data is invalid"));
-
-  getItemStep.next(choiseStep);
-
-  return getItemStep;
-}
-
-//Document.Processed.CAR
-function verifyCarProcessed(scope: Construct, props: TestApplicationSFProps): IChainable {
-  const getItemStep = new DynamoGetItem(scope, "Validate Document.Processed.CAR Event", {
-    integrationPattern: IntegrationPattern.REQUEST_RESPONSE,
-    table: props.testDataTable,
-    key: {
-      PK: DynamoAttributeValue.fromString(JsonPath.stringAt("$.cognitoIdentityId")),
-      SK: DynamoAttributeValue.fromString("Document.Processed.CAR"),
-    },
-  });
-
-  const choiseStep = new Choice(scope, "Validate Document.Processed.CAR Data")
-    .when(
-      Condition.and(
-        Condition.isNotNull(JsonPath.stringAt("$.Item.DATA.M.documentType.S")),
-        Condition.isNotNull(JsonPath.stringAt("$.Item.DATA.M.analyzedFieldAndValues"))
-      ),
-      new Pass(scope, "CAR event data is valid", {
-      })
-    )
-    .otherwise(new Fail(scope, "CAR event data is invalid"));
-
-  getItemStep.next(choiseStep);
-
-  return getItemStep;
-}
-
-//Fraud.Not.Detected.DRIVERS_LICENSE
-function verifyFraudNotDetectedDL(scope: Construct, props: TestApplicationSFProps): IChainable {
-  const getItemStep = new DynamoGetItem(scope, "Validate Fraud.Not.Detected.DRIVERS_LICENSE Event", {
-    integrationPattern: IntegrationPattern.REQUEST_RESPONSE,
-    table: props.testDataTable,
-    key: {
-      PK: DynamoAttributeValue.fromString(JsonPath.stringAt("$.cognitoIdentityId")),
-      SK: DynamoAttributeValue.fromString("Fraud.Not.Detected.DRIVERS_LICENSE"),
-    },
-  });
-
-  const choiseStep = new Choice(scope, "Validate Fraud.Not.Detected.DRIVERS_LICENSE Data")
-    .when(
-      Condition.and(
-        Condition.isNotNull(JsonPath.stringAt("$.Item.DATA.M.documentType.S")),
-        Condition.isNotNull(JsonPath.stringAt("$.Item.DATA.M.analyzedFieldAndValues"))
-      ),
-      new Pass(scope, "Fraud.Not.Detected.DRIVERS_LICENSE event data is valid", {
-      })
-    ).otherwise(new Fail(scope, "Fraud.Not.Detected.DRIVERS_LICENSE event data is invalid"));
-
-    getItemStep.next(choiseStep);
-
-    return getItemStep;
-}
