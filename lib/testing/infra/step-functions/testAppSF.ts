@@ -286,4 +286,8 @@ function verifyFraudNotDetectedDL(scope: Construct, props: TestApplicationSFProp
       new Pass(scope, "Fraud.Not.Detected.DRIVERS_LICENSE event data is valid", {
       })
     ).otherwise(new Fail(scope, "Fraud.Not.Detected.DRIVERS_LICENSE event data is invalid"));
+
+    getItemStep.next(choiseStep);
+
+    return getItemStep;
 }
