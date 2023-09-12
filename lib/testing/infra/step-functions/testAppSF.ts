@@ -206,6 +206,7 @@ function addDocumentsEventValidationStep(fileUploadStep: LambdaInvoke, scope: Co
   });
   parallelState.branch(verifyDLProcessed(scope, props));
   parallelState.branch(verifyCarProcessed(scope, props));
+  parallelState.branch(verifyFraudNotDetectedDL(scope, props));
 
   fileUploadStep.next(parallelState);
 
@@ -263,4 +264,26 @@ function verifyCarProcessed(scope: Construct, props: TestApplicationSFProps): IC
   getItemStep.next(choiseStep);
 
   return getItemStep;
+}
+
+//Fraud.Not.Detected.DRIVERS_LICENSE
+function verifyFraudNotDetectedDL(scope: Construct, props: TestApplicationSFProps): IChainable {
+  const getItemStep = new DynamoGetItem(scope, "Validate Fraud.Not.Detected.DRIVERS_LICENSE Event", {
+    integrationPattern: IntegrationPattern.REQUEST_RESPONSE,
+    table: props.testDataTable,
+    key: {
+      PK: DynamoAttributeValue.fromString(JsonPath.stringAt("$.cognitoIdentityId")),
+      SK: DynamoAttributeValue.fromString("Fraud.Not.Detected.DRIVERS_LICENSE"),
+    },
+  });
+
+  const choiseStep = new Choice(scope, "Validate Fraud.Not.Detected.DRIVERS_LICENSE Data")
+    .when(
+      Condition.and(
+        Condition.isNotNull(JsonPath.stringAt("$.Item.DATA.M.documentType.S")),
+        Condition.isNotNull(JsonPath.stringAt("$.Item.DATA.M.analyzedFieldAndValues"))
+      ),
+      new Pass(scope, "Fraud.Not.Detected.DRIVERS_LICENSE event data is valid", {
+      })
+    ).otherwise(new Fail(scope, "Fraud.Not.Detected.DRIVERS_LICENSE event data is invalid"));
 }
