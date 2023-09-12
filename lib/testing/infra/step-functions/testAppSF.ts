@@ -108,11 +108,13 @@ function addSignUpValidationStep(scope: Construct, waitStep: INextable, props: T
       cognitoIdentityId: JsonPath.stringAt("$[1].cognitoIdentityId"),
       dlImageSrcURL: JsonPath.stringAt("$[2].dlImageSrcURL"),
       carImageSrcURL: JsonPath.stringAt("$[2].carImageSrcURL"),
-    },
+      fnolParams: JsonPath.objectAt("$[2].fnolParams"),
+    }
+    ,
   });
   parallelState.branch(verifyCustSubmitted(scope, props));
   parallelState.branch(verifyCustAccept(scope, props));
-  parallelState.branch(passImageUrls(scope));
+  parallelState.branch(fetchAddnlData(scope));
 
   waitStep.next(parallelState);
 
@@ -190,11 +192,20 @@ function addFileUploadStep(signUpValidationStep: INextable, scope: Construct, pr
   return uploadFilesStep;
 }
 
-function passImageUrls(scope: Construct): IChainable {
+function fetchAddnlData(scope: Construct): IChainable {
   return new Pass(scope, "Fetch additional data", {
     parameters: {
       dlImageSrcURL: JsonPath.stringAt("$.dlImageSrcURL"),
       carImageSrcURL: JsonPath.stringAt("$.carImageSrcURL"),
+      fnolParams:{
+        userPoolId: JsonPath.stringAt("$.userPoolId"),
+        clientId: JsonPath.stringAt("$.clientId"),
+        userName: JsonPath.stringAt("$.userName"),
+        password: JsonPath.stringAt("$.password"),
+        identityPoolId: JsonPath.stringAt("$.identityPoolId"),
+        cognitoIdentityId:  JsonPath.stringAt("$.cognitoIdentityId.cognitoIdentityId"),
+        fnoldData: JsonPath.objectAt("$.fnolData")
+      }
     },
   });
 }
