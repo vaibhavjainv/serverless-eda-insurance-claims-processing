@@ -184,7 +184,7 @@ function verifyCustSubmitted(scope: Construct, props: TestApplicationSFProps): I
 function addFileUploadStep(signUpValidationStep: INextable, scope: Construct, props: TestApplicationSFProps) {
   const uploadFilesStep = new LambdaInvoke(scope, "Upload Files", {
     lambdaFunction: props.uploadFilesLambdaFunction,
-    resultPath: undefined
+    resultPath: ""
   });
   signUpValidationStep.next(uploadFilesStep);
   return uploadFilesStep;
