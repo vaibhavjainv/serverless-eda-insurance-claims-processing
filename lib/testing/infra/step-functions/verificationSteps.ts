@@ -49,7 +49,11 @@ export function verifyCarProcessed(scope: Construct, props: TestApplicationSFPro
         Condition.isNotNull(JsonPath.stringAt("$.Item.DATA.M.documentType.S")),
         Condition.isNotNull(JsonPath.stringAt("$.Item.DATA.M.analyzedFieldAndValues"))
       ),
-      new Pass(scope, "CAR event data is valid", {})
+      new Pass(scope, "CAR event data is valid", {
+        result: {
+          value: {},
+        },
+      })
     )
     .otherwise(new Fail(scope, "CAR event data is invalid"));
 
@@ -74,7 +78,11 @@ export function verifyFraudNotDetectedDL(scope: Construct, props: TestApplicatio
         Condition.isNotNull(JsonPath.stringAt("$.Item.DATA.M.documentType.S")),
         Condition.isNotNull(JsonPath.stringAt("$.Item.DATA.M.analyzedFieldAndValues"))
       ),
-      new Pass(scope, "Fraud.Not.Detected.DRIVERS_LICENSE event data is valid", {})
+      new Pass(scope, "Fraud.Not.Detected.DRIVERS_LICENSE event data is valid", {
+        result: {
+          value: {},
+        },
+      })
     )
     .otherwise(new Fail(scope, "Fraud.Not.Detected.DRIVERS_LICENSE event data is invalid"));
 
@@ -100,7 +108,11 @@ export function verifyFraudNotDetectedCar(scope: Construct, props: TestApplicati
         Condition.isNotNull(JsonPath.stringAt("$.Item.DATA.M.documentType.S")),
         Condition.isNotNull(JsonPath.stringAt("$.Item.DATA.M.analyzedFieldAndValues"))
       ),
-      new Pass(scope, "Fraud.Not.Detected.CAR event data is valid", {})
+      new Pass(scope, "Fraud.Not.Detected.CAR event data is valid", {
+        result: {
+          value: {},
+        },
+      })
     )
     .otherwise(new Fail(scope, "Fraud.Not.Detected.CAR event data is invalid"));
 
@@ -126,7 +138,11 @@ export function verifyCustomerDocumentUpdated(scope: Construct, props: TestAppli
         Condition.isNotNull(JsonPath.stringAt("$.Item.DATA.M.documentType.S")),
         Condition.isNotNull(JsonPath.stringAt("$.Item.DATA.M.customerId.S"))
       ),
-      new Pass(scope, "Customer.Document.Updated event data is valid", {})
+      new Pass(scope, "Customer.Document.Updated event data is valid", {
+        result: {
+          value: {},
+        },
+      })
     )
     .otherwise(new Fail(scope, "Customer.Document.Updated event data is invalid"));
 
