@@ -212,7 +212,7 @@ function addDocumentsEventValidationStep(fileUploadStep: LambdaInvoke, scope: Co
 }
 
 function verifyDLProcessed(scope: Construct, props: TestApplicationSFProps): IChainable {
-  const getItemStep = new DynamoGetItem(scope, "Get Document.Processed.DRIVERS_LICENSE", {
+  const getItemStep = new DynamoGetItem(scope, "Validate Document.Processed.DRIVERS_LICENSE Event", {
     integrationPattern: IntegrationPattern.REQUEST_RESPONSE,
     table: props.testDataTable,
     key: {
@@ -221,21 +221,18 @@ function verifyDLProcessed(scope: Construct, props: TestApplicationSFProps): ICh
     },
   });
 
-  // const choiseStep = new Choice(scope, "Validate Customer Submitted Event")
-  //   .when(
-  //     Condition.and(
-  //       Condition.isNotNull(JsonPath.stringAt("$.Item.DATA.M.cognitoIdentityId.S")),
-  //       Condition.isNotNull(JsonPath.stringAt("$.Item.SK.S"))
-  //     ),
-  //     new Pass(scope, "Data is valid", {
-  //       parameters: {
-  //         "cognitoIdentityId": JsonPath.stringAt("$.Item.DATA.M.cognitoIdentityId.S"),
-  //       },
-  //     })
-  //   )
-  //   .otherwise(new Fail(scope, "Data is invalid"));
+  const choiseStep = new Choice(scope, "Validate Document.Processed.DRIVERS_LICENSE Data")
+    .when(
+      Condition.and(
+        Condition.isNotNull(JsonPath.stringAt("$.Item.DATA.M.documentType.S")),
+        Condition.isNotNull(JsonPath.stringAt("$.Item.DATA.M.analyzedFieldAndValues"))
+      ),
+      new Pass(scope, "DRIVERS_LICENSE event data is valid", {
+      })
+    )
+    .otherwise(new Fail(scope, "DRIVERS_LICENSE event data is invalid"));
 
-  // getItemStep.next(choiseStep);
+  getItemStep.next(choiseStep);
 
   return getItemStep;
 }
