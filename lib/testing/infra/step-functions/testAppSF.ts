@@ -219,6 +219,7 @@ function addDocumentsEventValidationStep(prevStep: INextable, scope: Construct, 
       customerId: JsonPath.stringAt("$[0].customerId"),
     },
     resultPath: "$.fnolParams.fnoldData.personalInformation.customerId",
+    outputPath: "$.fnolParams",
   });
   parallelState.branch(verifyDLProcessed(scope, props));
   parallelState.branch(verifyCarProcessed(scope, props));
