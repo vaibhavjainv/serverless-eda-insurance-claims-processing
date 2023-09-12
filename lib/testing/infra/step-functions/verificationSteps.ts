@@ -21,7 +21,9 @@ export function verifyDLProcessed(scope: Construct, props: TestApplicationSFProp
         Condition.isNotNull(JsonPath.stringAt("$.Item.DATA.M.analyzedFieldAndValues"))
       ),
       new Pass(scope, "DRIVERS_LICENSE event data is valid", {
-        result: undefined
+        result: {
+          value: {},
+        },
       })
     )
     .otherwise(new Fail(scope, "DRIVERS_LICENSE event data is invalid"));
