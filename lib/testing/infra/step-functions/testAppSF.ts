@@ -36,6 +36,7 @@ import {
 export interface TestApplicationSFProps {
   testLoginLambdaFunction: NodejsFunction;
   uploadFilesLambdaFunction: NodejsFunction;
+  fnolLambdaFunction: NodejsFunction;
   testDataTable: Table;
 }
 
@@ -61,7 +62,9 @@ export class TestApplicationSF extends StateMachine {
 
     const secondWaitStep = addWaitStep(fileUploadStep, scope, "WaitForFileUpload");
 
-    addDocumentsEventValidationStep(secondWaitStep, scope, props);
+    const docValidnStep = addDocumentsEventValidationStep(secondWaitStep, scope, props);
+
+    addFNOLStep(docValidnStep, scope, props);
 
     super(scope, id, {
       definition: signUpLambdaStep,
@@ -230,4 +233,11 @@ function addDocumentsEventValidationStep(prevStep: INextable, scope: Construct, 
   prevStep.next(parallelState);
 
   return parallelState;
+}
+
+function addFNOLStep(docValidnStep: INextable, scope: Construct, props: TestApplicationSFProps) {
+  const fnolLambdaInvoke = new LambdaInvoke(scope, "FNOL Lambda Invoke", {
+    lambdaFunction: props.fnolLambdaFunction,
+  });
+  docValidnStep.next(fnolLambdaInvoke);
 }

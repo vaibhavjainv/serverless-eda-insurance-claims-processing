@@ -3,7 +3,7 @@
 import { Construct } from "constructs";
 import { NodejsFunction } from "aws-cdk-lib/aws-lambda-nodejs";
 import { Runtime } from "aws-cdk-lib/aws-lambda";
-import {  RetentionDays } from "aws-cdk-lib/aws-logs";
+import { RetentionDays } from "aws-cdk-lib/aws-logs";
 import { Effect, PolicyStatement } from "aws-cdk-lib/aws-iam";
 import { TestApplicationSF } from "./step-functions/testAppSF";
 import { AttributeType, BillingMode, Table } from "aws-cdk-lib/aws-dynamodb";
@@ -11,9 +11,7 @@ import { RemovalPolicy } from "aws-cdk-lib";
 import { EventBus, Rule } from "aws-cdk-lib/aws-events";
 import { CustomerEvents } from "../../services/customer/infra/customer-events";
 import { LambdaFunction } from "aws-cdk-lib/aws-events-targets";
-import {DocumentsEvents} from "../../services/documents/infra/documents-events";
-
-
+import { DocumentsEvents } from "../../services/documents/infra/documents-events";
 
 export interface TestApplicationSFProps {
   eBus: EventBus;
@@ -62,12 +60,20 @@ export class TestingService extends Construct {
       entry: `${__dirname}/../app/handlers/uploadFiles.js`,
     });
 
-  
+    // Create Signup Lambda function
+    const fnolLambdaFunction = new NodejsFunction(this, "FNOL", {
+      runtime: Runtime.NODEJS_18_X,
+      memorySize: 512,
+      logRetention: RetentionDays.ONE_WEEK,
+      handler: "handler",
+      entry: `${__dirname}/../app/handlers/fnol.js`,
+    });
 
     new TestApplicationSF(this, "TestApplicationSF", {
       testLoginLambdaFunction,
       uploadFilesLambdaFunction,
-      testDataTable
+      fnolLambdaFunction
+      testDataTable,
     });
 
     //Create Save Events Lambda Function
