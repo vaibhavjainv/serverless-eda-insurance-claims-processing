@@ -72,7 +72,7 @@ export class TestingService extends Construct {
     new TestApplicationSF(this, "TestApplicationSF", {
       testLoginLambdaFunction,
       uploadFilesLambdaFunction,
-      fnolLambdaFunction
+      fnolLambdaFunction,
       testDataTable,
     });
 
