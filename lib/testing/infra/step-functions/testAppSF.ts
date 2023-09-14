@@ -64,7 +64,7 @@ export class TestApplicationSF extends StateMachine {
 
     const docValidnStep = addDocumentsEventValidationStep(secondWaitStep, scope, props);
 
-    addFNOLStep(docValidnStep, scope, props);
+    // addFNOLStep(docValidnStep, scope, props);
 
     super(scope, id, {
       definition: signUpLambdaStep,
